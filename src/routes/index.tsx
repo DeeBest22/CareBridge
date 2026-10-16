@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-const heroAsset = "https://placehold.co/1200x700?text=CareBridge";
-const networkAsset = "https://placehold.co/1200x700?text=CareBridge+Network";
+const heroAsset = "/careBridge-hero.png";
+const networkAsset = "/careBridge-network-v2.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
