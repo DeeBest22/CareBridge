@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-const heroAsset = "./careBridge-hero.png";
-const networkAsset = "./careBridge-network-v2.png";
-
+import heroAsset from "../assets/careBridge-hero.png";
+import networkAsset from "../assets/careBridge-network-v2.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
