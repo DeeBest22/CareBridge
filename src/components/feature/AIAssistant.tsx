@@ -9,13 +9,13 @@ const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemm
 
 const SECTIONS: Record<Role, string> = {
   patient:
-    'Overview (summary, health tips, quick record upload), Ask for care (send care requests to providers), Appointments, Medical Records (upload and view records), Prescriptions.',
+    'Overview (summary, health tips, quick record upload), Appointments, Medical Records (upload and view records), Prescriptions.',
   provider:
     'Overview (stats and activity), Inbox (patient care requests), Appointments, Patients (patient list and details).',
 };
 
 const SUGGESTIONS: Record<Role, string[]> = {
-  patient: ['How do I ask for care?', 'How do I upload a record?', 'Where are my prescriptions?'],
+  patient: ['How do I book an appointment?', 'How do I upload a record?', 'Where are my prescriptions?'],
   provider: ['How do I reply to a request?', 'Where are my appointments?', 'How do I find a patient?'],
 };
 
