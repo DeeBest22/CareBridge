@@ -4,8 +4,8 @@ type Role = 'patient' | 'provider';
 type Msg = { from: 'user' | 'ai'; text: string };
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const FALLBACK_MODEL = 'gemini-3.1-flash-lite';
-const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-flash-latest';
+const FALLBACK_MODEL = 'gemma-4-31b-it';
+const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemma-4-26b-a4b-it';
 
 const SECTIONS: Record<Role, string> = {
   patient:
@@ -48,10 +48,9 @@ export default function AIAssistant({ role }: { role: Role }) {
     try {
       if (!API_KEY) throw new Error('missing key');
       const body = JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt(role) }] },
-        contents: next.slice(-12).map((m) => ({
+        contents: next.slice(-11).map((m, i) => ({
           role: m.from === 'user' ? 'user' : 'model',
-          parts: [{ text: m.text }],
+          parts: [{ text: (i === 0 ? systemPrompt(role) + '\n\nUser: ' : '') + m.text }],
         })),
         generationConfig: { maxOutputTokens: 800, temperature: 0.4 },
       });
@@ -70,7 +69,7 @@ export default function AIAssistant({ role }: { role: Role }) {
         if (![429, 500, 503].includes(res.status)) break;
         await new Promise((r) => setTimeout(r, 800));
       }
-      reply = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || reply;
+      reply = data?.candidates?.[0]?.content?.parts?.filter((p: any) => !p.thought).map((p: any) => p.text).join('').trim() || reply;
     } catch (e) {
       if (!API_KEY) reply = 'Assistant is not configured yet. Add VITE_GEMINI_API_KEY to your .env file.';
     }
