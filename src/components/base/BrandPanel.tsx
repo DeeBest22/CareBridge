@@ -61,7 +61,7 @@ export default function BrandPanel({
             <i className="ri-heart-pulse-line text-lg" aria-hidden="true"></i>
           </span>
           <span>
-            <span className="block font-heading text-lg font-bold leading-none text-white">CareLink</span>
+            <span className="block font-heading text-lg font-bold leading-none text-white">CareBridge</span>
             <span className="mt-1 block text-xs text-white/70">Connecting healthcare. Improving lives.</span>
           </span>
         </Link>
