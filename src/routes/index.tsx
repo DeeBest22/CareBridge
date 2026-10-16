@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-const heroAsset = "/careBridge-hero.png";
-const networkAsset = "/careBridge-network-v2.png";
+import heroAsset from "../assets/careBridge-hero.png";
+import networkAsset from "../assets/careBridge-network-v2.png"
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,7 +65,7 @@ function Index() {
       <header className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-8 lg:px-12">
         <a href="/" className="text-2xl font-extrabold tracking-tight">
           <span className="text-brand-blue">Care</span>
-          <span className="text-brand-teal">Link</span>
+          <span className="text-brand-teal">Bridge</span>
           <span className="text-brand-blue">.</span>
         </a>
 
