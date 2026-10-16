@@ -5,7 +5,7 @@ type Msg = { from: 'user' | 'ai'; text: string };
 
 const API_KEY = "AQ.Ab8RN6JrKJMi9he9AI2xB2rWbfpH860AvtxkfL1rCk8CyZFU7g" as string | undefined;
 const FALLBACK_MODEL = 'gemma-4-31b-it';
-const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemma-4-26b-a4b-it';
+const MODEL = 'gemma-4-26b-a4b-it';
 
 const SECTIONS: Record<Role, string> = {
   patient:
