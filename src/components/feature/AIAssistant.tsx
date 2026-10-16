@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, type FormEvent } from 'react';
 type Role = 'patient' | 'provider';
 type Msg = { from: 'user' | 'ai'; text: string };
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+const API_KEY = "AQ.Ab8RN6JrKJMi9he9AI2xB2rWbfpH860AvtxkfL1rCk8CyZFU7g" as string | undefined;
 const FALLBACK_MODEL = 'gemma-4-31b-it';
 const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemma-4-26b-a4b-it';
 
