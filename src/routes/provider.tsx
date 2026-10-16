@@ -54,6 +54,7 @@ import { quickActions } from '@/mocks/data/provider';
 import DashboardTopBar from '@/components/feature/DashboardTopBar';
 import UserAvatar from '@/components/base/UserAvatar';
 import AuthGuard from '@/components/base/AuthGuard';
+import AIAssistant from '@/components/feature/AIAssistant';
 import { ProviderCareInbox } from '@/components/feature/CareRequests';
 
 export const Route = createFileRoute('/provider')({
@@ -2240,6 +2241,7 @@ function Provider() {
           </div>
         </main>
       </div>
+      <AIAssistant role="provider" />
     </div>
   );
 }

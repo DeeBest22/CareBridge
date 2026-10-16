@@ -7,6 +7,7 @@ import { healthTips } from '@/mocks/data/patient';
 import DashboardTopBar from '@/components/feature/DashboardTopBar';
 import UserAvatar from '@/components/base/UserAvatar';
 import AuthGuard from '@/components/base/AuthGuard';
+import AIAssistant from '@/components/feature/AIAssistant';
 import { PatientCareRequests } from '@/components/feature/CareRequests';
 
 export const Route = createFileRoute('/patient')({
@@ -1837,6 +1838,7 @@ function Patient() {
           {section === 'prescriptions' && <PrescriptionsSection />}
         </main>
       </div>
+      <AIAssistant role="patient" />
     </div>
   );
 }
