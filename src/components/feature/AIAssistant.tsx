@@ -4,6 +4,7 @@ type Role = 'patient' | 'provider';
 type Msg = { from: 'user' | 'ai'; text: string };
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+const FALLBACK_MODEL = 'gemini-3.1-flash-lite';
 const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-flash-latest';
 
 const SECTIONS: Record<Role, string> = {
@@ -46,22 +47,29 @@ export default function AIAssistant({ role }: { role: Role }) {
     let reply = 'Something went wrong. Please try again.';
     try {
       if (!API_KEY) throw new Error('missing key');
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-        {
+      const body = JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt(role) }] },
+        contents: next.slice(-12).map((m) => ({
+          role: m.from === 'user' ? 'user' : 'model',
+          parts: [{ text: m.text }],
+        })),
+        generationConfig: { maxOutputTokens: 800, temperature: 0.4 },
+      });
+      let data: any;
+      // 503/429 are temporary overloads: retry, then fall back to a second model
+      for (const m of [MODEL, FALLBACK_MODEL, MODEL]) {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-goog-api-key': API_KEY },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemPrompt(role) }] },
-            contents: next.slice(-12).map((m) => ({
-              role: m.from === 'user' ? 'user' : 'model',
-              parts: [{ text: m.text }],
-            })),
-            generationConfig: { maxOutputTokens: 800, temperature: 0.4 },
-          }),
-        },
-      );
-      const data = await res.json();
+          body,
+        });
+        if (res.ok) {
+          data = await res.json();
+          break;
+        }
+        if (![429, 500, 503].includes(res.status)) break;
+        await new Promise((r) => setTimeout(r, 800));
+      }
       reply = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || reply;
     } catch (e) {
       if (!API_KEY) reply = 'Assistant is not configured yet. Add VITE_GEMINI_API_KEY to your .env file.';
