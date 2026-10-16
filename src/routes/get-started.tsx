@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import BrandPanel from '@/components/base/BrandPanel';
-const entryImage = '/careBridge-left-panel.jpg';  
+import entryImage from '../assets/careBridge-left-panel.jpg'; // <-- change here
+
 
 export const Route = createFileRoute('/get-started')({
   component: EntryPage,
