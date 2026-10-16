@@ -4,7 +4,7 @@ type Role = 'patient' | 'provider';
 type Msg = { from: 'user' | 'ai'; text: string };
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-2.5-flash';
+const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-flash-latest';
 
 const SECTIONS: Record<Role, string> = {
   patient:
@@ -57,7 +57,7 @@ export default function AIAssistant({ role }: { role: Role }) {
               role: m.from === 'user' ? 'user' : 'model',
               parts: [{ text: m.text }],
             })),
-            generationConfig: { maxOutputTokens: 300, temperature: 0.4 },
+            generationConfig: { maxOutputTokens: 800, temperature: 0.4 },
           }),
         },
       );
