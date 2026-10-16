@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import heroAsset from "../assets/careBridge-hero.png";
 import networkAsset from "../assets/careBridge-network-v2.png";
+import { Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { useState, type FormEvent, type ReactNode } from "react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -136,6 +138,8 @@ function Index() {
             />
           </div>
         </section>
+
+        <CareLinkAssistant />
 
         <section className="border-t border-border">
           <div className="mx-auto max-w-[1280px] px-6 py-20 lg:px-12 lg:py-28">
@@ -582,4 +586,109 @@ function Index() {
       </footer>
     </div>
   );
+}
+function CareLinkAssistant() {
+  const [open, setOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const ask = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setAnswer(null);
+    setError(null);
+    try {
+      const response = await fetch("/api/carelink-assistant", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      const payload = await response.json() as { answer?: string; error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "The CareLink assistant is unavailable.");
+      setAnswer(payload.answer ?? "");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The CareLink assistant is unavailable.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {open && <button aria-label="Close CareLink assistant" className="fixed inset-0 z-40 cursor-default bg-overlay/20 backdrop-blur-[2px]" onClick={() => setOpen(false)} />}
+
+      {open && (
+        <section role="dialog" aria-modal="true" aria-labelledby="carelink-chat-title" className="fixed inset-x-3 bottom-3 z-50 flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_24px_80px_-30px_oklch(0.18_0.05_255/0.65)] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[min(440px,calc(100vw-3rem))]">
+          <header className="flex shrink-0 items-center justify-between border-b border-border bg-primary px-4 py-3.5 text-primary-foreground sm:px-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid size-9 shrink-0 place-items-center rounded-full bg-white/15"><Sparkles className="size-4" /></div>
+              <div className="min-w-0"><h2 id="carelink-chat-title" className="truncate text-sm font-bold">CareLink assistant</h2><p className="text-[11px] text-primary-foreground/75">General health guidance</p></div>
+            </div>
+            <button type="button" aria-label="Close chat" title="Close chat" className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-white/15" onClick={() => setOpen(false)}><X className="size-4" /></button>
+          </header>
+
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
+            <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-secondary/60 px-3.5 py-3 text-sm leading-relaxed text-foreground">
+              Hi, I can help you prepare for a visit, understand care options, or find the right questions to ask a clinician. What would you like to know?
+            </div>
+            {question && answer && <div className="ml-auto max-w-[90%] rounded-2xl rounded-tr-sm bg-primary/10 px-3.5 py-3 text-sm leading-relaxed text-foreground">{question}</div>}
+            {loading && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-4 animate-spin" /> CareLink is thinking...</div>}
+            {answer && <div className="max-w-[95%] rounded-2xl rounded-tl-sm border border-border bg-card px-3.5 py-3 text-sm leading-relaxed text-foreground"><p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">CareLink</p><div>{formatAssistantAnswer(answer)}</div></div>}
+            {error && <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
+          </div>
+
+          <form onSubmit={ask} className="shrink-0 border-t border-border bg-background p-3 sm:p-4">
+            <div className="flex items-end gap-2 rounded-xl border border-border bg-card p-2 focus-within:border-brand-teal focus-within:ring-2 focus-within:ring-brand-teal/20">
+              <textarea
+                id="carelink-question"
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+                placeholder="Ask a health question..."
+                aria-label="Ask CareLink a question"
+                className="max-h-28 min-h-11 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+                maxLength={1000}
+                rows={1}
+              />
+              <button type="submit" aria-label="Send question" title="Send question" disabled={loading || question.trim().length < 3} className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              </button>
+            </div>
+            <p className="mt-2 px-1 text-[10px] leading-relaxed text-muted-foreground">General guidance only. Do not share sensitive medical information or use this for emergencies.</p>
+          </form>
+        </section>
+      )}
+
+      {!open && <button type="button" aria-label="Open CareLink assistant" title="Open CareLink assistant" onClick={() => setOpen(true)} className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-[0_14px_35px_-12px_oklch(0.24_0.08_255/0.8)] transition-transform hover:-translate-y-0.5 hover:opacity-95 sm:bottom-6 sm:right-6 sm:px-5 sm:py-3.5">
+        <MessageCircle className="size-5" />
+        <span>Ask CareLink</span>
+      </button>}
+    </>
+  );
+}
+
+function formatAssistantAnswer(answer: string): ReactNode {
+  return answer.split(/\r?\n/).map((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) return <div key={`space-${index}`} className="h-2" aria-hidden="true" />;
+
+    const bullet = trimmed.match(/^[-*]\s+(.*)$/);
+    const content = bullet ? bullet[1] : trimmed;
+    const formatted = content.split(/(\*\*[^*]+\*\*)/g).map((part, partIndex) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={`${index}-${partIndex}`}>{part.slice(2, -2)}</strong>;
+      }
+      return <span key={`${index}-${partIndex}`}>{part}</span>;
+    });
+
+    return bullet ? (
+      <div key={`line-${index}`} className="flex gap-2">
+        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+        <span>{formatted}</span>
+      </div>
+    ) : (
+      <p key={`line-${index}`}>{formatted}</p>
+    );
+  });
 }

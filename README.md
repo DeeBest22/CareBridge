@@ -37,3 +37,9 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Clinical copilot
+
+The provider patient chart includes an optional Gemma-powered clinical copilot. Keep the API key server-side by setting `GEMINI_API_KEY` or `GEMMA_API_KEY` in the runtime environment. The default model is `gemma-4-26b-a4b-it`; override it with `GEMMA_MODEL` when needed. The copilot only receives the consent-filtered record summaries already visible to the provider.
+
+The landing page also includes a general-purpose CareLink assistant for health-navigation questions. It does not accept patient records or provide diagnoses.

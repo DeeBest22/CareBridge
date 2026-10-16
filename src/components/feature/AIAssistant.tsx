@@ -3,28 +3,10 @@ import { useState, useRef, useEffect, type FormEvent } from 'react';
 type Role = 'patient' | 'provider';
 type Msg = { from: 'user' | 'ai'; text: string };
 
-const API_KEY = "AQ.Ab8RN6JrKJMi9he9AI2xB2rWbfpH860AvtxkfL1rCk8CyZFU7g" as string | undefined;
-const FALLBACK_MODEL = 'gemma-4-31b-it';
-const MODEL = 'gemma-4-26b-a4b-it';
-
-const SECTIONS: Record<Role, string> = {
-  patient:
-    'Overview (summary, health tips, quick record upload), Appointments, Medical Records (upload and view records), Prescriptions.',
-  provider:
-    'Overview (stats and activity), Inbox (patient care requests), Appointments, Patients (patient list and details).',
-};
-
 const SUGGESTIONS: Record<Role, string[]> = {
   patient: ['How do I book an appointment?', 'How do I upload a record?', 'Where are my prescriptions?'],
   provider: ['How do I reply to a request?', 'Where are my appointments?', 'How do I find a patient?'],
 };
-
-const systemPrompt = (role: Role) =>
-  `You are the in-app assistant for a healthcare web platform. The user is a ${role}. ` +
-  `The ${role} dashboard has these sections: ${SECTIONS[role]} ` +
-  `ONLY help with using this website and dashboard: navigation, features, and how-to steps. ` +
-  `If asked anything else (medical advice, diagnoses, general knowledge, coding, etc.), politely decline in one sentence and redirect to what you can help with. ` +
-  `Never invent features that are not listed. If unsure, say so. Keep answers short (max 3 sentences), friendly, plain text.`;
 
 export default function AIAssistant({ role }: { role: Role }) {
   const [open, setOpen] = useState(false);
@@ -46,32 +28,16 @@ export default function AIAssistant({ role }: { role: Role }) {
     setBusy(true);
     let reply = 'Something went wrong. Please try again.';
     try {
-      if (!API_KEY) throw new Error('missing key');
-      const body = JSON.stringify({
-        contents: next.slice(-11).map((m, i) => ({
-          role: m.from === 'user' ? 'user' : 'model',
-          parts: [{ text: (i === 0 ? systemPrompt(role) + '\n\nUser: ' : '') + m.text }],
-        })),
-        generationConfig: { maxOutputTokens: 800, temperature: 0.4 },
+      const response = await fetch('/api/site-assistant', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ question: q, role }),
       });
-      let data: any;
-      // 503/429 are temporary overloads: retry, then fall back to a second model
-      for (const m of [MODEL, FALLBACK_MODEL, MODEL]) {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': API_KEY },
-          body,
-        });
-        if (res.ok) {
-          data = await res.json();
-          break;
-        }
-        if (![429, 500, 503].includes(res.status)) break;
-        await new Promise((r) => setTimeout(r, 800));
-      }
-      reply = data?.candidates?.[0]?.content?.parts?.filter((p: any) => !p.thought).map((p: any) => p.text).join('').trim() || reply;
-    } catch (e) {
-      if (!API_KEY) reply = 'Assistant is not configured yet. Add VITE_GEMINI_API_KEY to your .env file.';
+      const payload = await response.json() as { answer?: string; error?: string };
+      if (!response.ok) throw new Error(payload.error ?? reply);
+      reply = payload.answer ?? reply;
+    } catch (error) {
+      reply = error instanceof Error ? error.message : reply;
     }
     setMsgs((m) => [...m, { from: 'ai', text: reply }]);
     setBusy(false);

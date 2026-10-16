@@ -44,6 +44,8 @@ import {
   Syringe,
   Search,
   Activity,
+  Sparkles,
+  MessageCircleQuestion,
   Menu,
   LogOut,
   type LucideProps,
@@ -909,6 +911,95 @@ interface RecordItem {
   files: RecordFileItem[];
 }
 
+type CopilotResult = {
+  overview: string;
+  observations: string[];
+  followUpQuestions: string[];
+  safetyNote: string;
+};
+
+function ClinicalCopilot({ patient, records }: { patient: PatientCard; records: RecordItem[] }) {
+  const [result, setResult] = useState<CopilotResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const generate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/clinical-copilot', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          patient: {
+            name: patient.full_name,
+            age: patient.age,
+            gender: patient.gender,
+            condition: patient.condition,
+            status: patient.status,
+          },
+          records: records.map((record) => ({
+            title: record.title,
+            category: record.category,
+            provider: record.provider,
+            date: record.date,
+            summary: record.summary,
+          })),
+        }),
+      });
+      const payload = await response.json() as CopilotResult & { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? 'The clinical copilot is unavailable.');
+      setResult(payload);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The clinical copilot is unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="rounded-lg border border-primary/20 bg-accent/50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+            <Sparkles className="size-4" strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Clinical copilot</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">Summarize shared records and prepare the next visit.</p>
+          </div>
+        </div>
+        <button onClick={generate} disabled={loading || records.length === 0} className={`${btnPrimary} shrink-0 disabled:cursor-not-allowed disabled:opacity-60`}>
+          {loading ? <Loader2 className="size-4 animate-spin" strokeWidth={2} /> : <Sparkles className="size-4" strokeWidth={2} />}
+          {loading ? 'Reviewing…' : result ? 'Refresh summary' : 'Review records'}
+        </button>
+      </div>
+
+      {error && <p className="mt-3 rounded-md border border-destructive/25 bg-destructive-soft px-3 py-2 text-xs text-destructive">{error}</p>}
+      {result && (
+        <div className="mt-4 space-y-4 border-t border-primary/15 pt-4">
+          <p className="text-sm leading-relaxed text-foreground">{result.overview}</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><Activity className="size-3.5" /> Record observations</p>
+              <ul className="space-y-2 text-sm text-foreground">
+                {result.observations.map((item) => <li key={item} className="flex gap-2"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />{item}</li>)}
+              </ul>
+            </div>
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><MessageCircleQuestion className="size-3.5" /> Follow-up questions</p>
+              <ul className="space-y-2 text-sm text-foreground">
+                {result.followUpQuestions.map((item) => <li key={item} className="flex gap-2"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />{item}</li>)}
+              </ul>
+            </div>
+          </div>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">{result.safetyNote} AI output is decision support, not a diagnosis.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function PatientsSection({
   initialPatientId,
   onInitialPatientConsumed,
@@ -1257,6 +1348,10 @@ function PatientsSection({
                 <span className="text-foreground">You have access to <strong className="font-semibold text-foreground">{activeRecords.length}</strong> record{activeRecords.length === 1 ? '' : 's'}.</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1 ml-6">Only records this patient has shared with you are shown here.</p>
+            </div>
+
+            <div className="px-6 pt-5">
+              <ClinicalCopilot patient={activePatient} records={activeRecords} />
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
